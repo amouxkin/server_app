@@ -11,6 +11,7 @@ function initializeServer(request, response) {
     request.on("data", (data) => buffer += stringDecoder.write(data));
     request.on("end", requestProcess);
     function requestProcess() {
+        ``;
         buffer += stringDecoder.end();
         let requestedData = new RequestData(request, buffer);
         (router[requestedData.routerArray[0]] || router.notFound)(requestedData, responseWriter);
