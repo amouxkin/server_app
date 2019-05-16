@@ -1,43 +1,41 @@
 import * as http from 'http';
 import {StringDecoder} from 'string_decoder';
 import * as url from 'url';
+import * as router from './router';
+import {RequestData} from './requestData';
+
+import {environment} from "./config.js";
+
 
 const stringDecoder = new StringDecoder("utf-8");
 
 const server:http.Server = http.createServer(initializeServer);
-server.listen(3000);
+server.listen(environment.httpPort);
 
 function initializeServer(request:http.IncomingMessage, response:http.ServerResponse){
     let buffer = '';
     request.on("data",(data) => buffer += stringDecoder.write(data) );
     request.on("end", requestProcess);
 
-    function requestProcess() {``
+    function requestProcess() {
         buffer += stringDecoder.end();
-        let requestedData = new RequestData(request, buffer);
+
+        let jsonObject;
+
+        try {
+            jsonObject = JSON.parse(buffer);
+        } catch (e) {
+            console.log(e);
+            return responseWriter(400,"Invalid Json", "text");
+        }
+
+        let requestedData = new RequestData(request, jsonObject);
         (router[requestedData.routerArray[0]] || router.notFound)(requestedData, responseWriter);
 
-        function responseWriter(responseCode:number){
-            response.writeHead(responseCode,{"Content-Type" : "application/json"});
-            response.write("Hello World");
+        function responseWriter(responseCode:number, returnString:string, contentType:string = "application/json"){
+            response.writeHead(responseCode,{"Content-Type" : contentType});
+            response.write(returnString || "Nothing to return");
             response.end();
         }
-    }
-}
-
-const router = {
-    ping : (data, callback)=> callback(200),
-    notFound : (data, callback) => callback(400)
-};
-
-class RequestData {
-    method:string;
-    payload:object;
-    routerArray:string[];
-
-    constructor(request:http.IncomingMessage, buffer:string){
-        this.method = request.method.toLowerCase();
-        this.payload = JSON.parse(buffer) || {};
-        this.routerArray = url.parse(request.url, true).path.slice(1).split('/');
     }
 }
