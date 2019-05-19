@@ -25,13 +25,16 @@ function initializeServer(request:http.IncomingMessage, response:http.ServerResp
         try {
             jsonObject = JSON.parse(buffer);
         } catch (e) {
-            console.log(e);
-            return responseWriter(400,"Invalid Json", "text");
+            //console.log(e);
+            if (buffer){
+                return responseWriter(400,"Invalid Json", "text");
+            } else {
+                jsonObject = {};
+            }
         }
 
         let requestedData = new RequestData(request, jsonObject);
-        (router[requestedData.routerArray[0]] || router.notFound)(requestedData, responseWriter);
-
+        (router[requestedData.pathName] || router.notFound)(requestedData, responseWriter);
         function responseWriter(responseCode:number, returnString:string, contentType:string = "application/json"){
             response.writeHead(responseCode,{"Content-Type" : contentType});
             response.write(returnString || "Nothing to return");
