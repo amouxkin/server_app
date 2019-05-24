@@ -1,10 +1,8 @@
 import * as http from 'http';
 import {StringDecoder} from 'string_decoder';
-import * as url from 'url';
 import * as router from './router';
 import {RequestData} from './requestData';
-
-import {environment} from "./config.js";
+import {environment} from "./config";
 
 
 const stringDecoder = new StringDecoder("utf-8");

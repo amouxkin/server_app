@@ -33,12 +33,12 @@ import * as path from 'path';
     export function read(path: string, fileName: string, type: string = "json") {
         return new Promise(function (resolve, reject) {
             fs.readFile(baseDir + path + "/" + fileName + "." + type, 'utf8', function (error, data) {
-                error ? reject(4) : resolve(data);
+                error ? reject(11) : resolve(data);
             })
         });
     }
 
-    export function readData(path:string, fileName:string, type:string = 'json') {
+    export function readData(path:string, fileName:string, needPassword:boolean = false, type:string = 'json') {
         return new Promise(function (resolve,reject) {
             read(path, fileName, type)
                 .then((data:string)=>{
@@ -46,10 +46,13 @@ import * as path from 'path';
                         return reject(11);
                     } else {
                         data  = JSON.parse(data);
-                        delete data['password'];
+                        // Since we don't need password -> security risk
+                        needPassword || delete data['password'];
                         resolve(data);
                     }
-                });
+                })
+                .catch((errorCode)=> reject(errorCode))
+            ;
         });
     }
 
@@ -112,7 +115,14 @@ import * as path from 'path';
         8 : 'Error : Cannot append file',
         9 : 'Error : Cannot Delete file',
         10 : 'Error : File does not exist',
-        11 : 'Error : Empty file'
+        11 : 'Error : Empty file',
+        12 : 'Error : Wrong Password',
+        13 : 'Error : Invalid token (required file missing)',
+        14 : 'Error : Expired token',
+        20 : 'Error : Missing phone number',
+        50 : 'Error : Password hashing failed',
+        51 : 'Error : Missing required field(s)'
+
     };
     //
     // return {
