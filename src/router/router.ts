@@ -1,74 +1,21 @@
-import * as dataHandler from "./dataHandler";
-import {RequestData} from './requestData';
-import {hash} from './helper';
-import {UserToken} from './token';
-import {errorObject} from "./dataHandler";
+import * as dataHandler from "../dataHandler";
+import {hash,checkProperty, checkPhoneNumberExist, verifyToken} from "../helper";
+import * as config from '../config';
 
-// export default (function () {
+import {UserData} from '../object/userData';
+import {TokenData} from '../object/tokenData';
+import {RequestData} from '../object/requestData';
+import {CheckerRequestHeader} from '../object/checkerRequestData'
 
-function _checkProperty(property: string, payload: object, length: number = 0, fallBack: any = false) {
-    if ((payload == null) || (!payload[property]) || (payload[property].toString().trim().length < length)) {
-        return fallBack;
-    }
-    let type = typeof payload[property];
-    // Switch for future
-    switch (type) {
-        case "string":
-            return (payload[property] as string).trim();
-        default:
-            return payload[property];
-    }
-}
-
-function  _checkPropertyHash(property:string, payload:object, length:number = 8, fallBack:any = false) {
-    if ((!payload[property]) || (payload[property].toString().trim().length < length) || typeof (payload[property]) != 'string') {
-        return fallBack;
-    }
-    return hash((payload[property] as string).trim());
-}
-
-function _checkPhoneNumberExist(phoneNumber:string) {
-    return (!((typeof (phoneNumber) != 'string') || (phoneNumber.trim().length == 0)));
-}
-
-function _verifyToken(id:string, phone:string) {
-    return new Promise(   function(resolve, reject){
-        dataHandler.checkFileExists("tokens", id)
-            .then(() => dataHandler.readData("tokens", id))
-            .then(function (data) {
-                if (data['phone'] != phone && data['expires'] < Date.now()) reject(13);
-                return resolve();
-            })
-            .catch((errorCode) =>  reject(errorCode || 13))
-    });
-}
-
-export class UserData {
-    firstName;
-    lastName;
-    phone;
-    password;
-    toSAgreement;
-
-    constructor(payload: object, hashPassword:boolean = true) {
-        this.firstName = _checkProperty('firstName', payload);
-        this.lastName = _checkProperty('lastName', payload);
-        this.phone = _checkProperty('phone', payload, 5);
-        this.password = hashPassword ? _checkPropertyHash('password', payload, 8) : _checkProperty('password', payload, 8);
-        this.toSAgreement = _checkProperty('toSAgreement', payload);
-    }
-}
 
 export function users(data: RequestData, callback) {
     function _post() {
         let userPayload = new UserData(data.payload);
         if (!(userPayload.password && userPayload.lastName && userPayload.firstName && userPayload.password && userPayload.phone && userPayload.toSAgreement)) {
-            return callback(400, errorObject["51"], "text");
+            return callback(400, dataHandler.errorObject["51"], "text");
         }
 
-        if (!userPayload.password) {
-            return callback(400, errorObject["50"], 'text');
-        }
+        if (!userPayload.password) return callback(400, dataHandler.errorObject["50"], 'text');
 
         dataHandler.checkPathAvaiable('users', userPayload.phone,)
             .then(() => dataHandler.create('users', userPayload.phone))
@@ -79,9 +26,9 @@ export function users(data: RequestData, callback) {
     }
 
     function _get(data:RequestData, callback) {
-        if (!_checkPhoneNumberExist(data.query['phone'])) return callback(400, errorObject["20"], 'text');
+        if (!checkPhoneNumberExist(data.query['phone'])) return callback(400, dataHandler.errorObject["20"], 'text');
 
-        _verifyToken(data.header['id'], data.header['phone'])
+        verifyToken(data.header['id'], data.header['phone'])
             .then(() => dataHandler.checkFileExists('users', (data.query['phone'] as string).trim()))
             .then(() => dataHandler.readData('users', data.query['phone'].trim()))
             .then((data) => callback(200,JSON.stringify(data)))
@@ -89,9 +36,9 @@ export function users(data: RequestData, callback) {
     }
 
     function _put(data:RequestData, callback) {
-        if (!_checkPhoneNumberExist(data.query['phone'])) return callback(400, errorObject["20"], 'text');
+        if (!checkPhoneNumberExist(data.query['phone'])) return callback(400, dataHandler.errorObject["20"], 'text');
 
-        _verifyToken(data.header['id'], data.header['phone'])
+        verifyToken(data.header['id'], data.header['phone'])
             .then(()=> dataHandler.checkFileExists('users',data.query['phone']))
             .then(processPut)
             .catch((errorCode) => callback(400, dataHandler.errorObject[`${errorCode}`]));
@@ -99,7 +46,7 @@ export function users(data: RequestData, callback) {
         function processPut(){
             let userPayload = new UserData(data.payload);
             if (!(userPayload.password || userPayload.lastName || userPayload.firstName || userPayload.password || userPayload.phone || userPayload.toSAgreement)) {
-                return callback(400, errorObject["51"], "text");
+                return callback(400, dataHandler.errorObject["51"], "text");
             }
 
             dataHandler.readData('users', data.query['phone'])
@@ -114,14 +61,14 @@ export function users(data: RequestData, callback) {
                         .then(() => callback(200, 'Data updated'))
                         .catch((errorCode) => callback(500, dataHandler.errorObject[`${errorCode}`]))
                 })
-                .catch(()=> callback(400, errorObject["4"]));
+                .catch(()=> callback(400, dataHandler.errorObject["4"]));
         }
     }
 
     function _delete() {
-        if (!_checkPhoneNumberExist(data.query['phone'])) return callback(400, errorObject["20"], 'text');
+        if (!checkPhoneNumberExist(data.query['phone'])) return callback(400, dataHandler.errorObject["20"], 'text');
 
-        _verifyToken(data.header['id'], data.header['phone'])
+        verifyToken(data.header['id'], data.header['phone'])
             .then(()=> dataHandler.checkFileExists('users',data.query['phone']))
             .then(() => dataHandler.unlink('users', data.query['phone']))
             .then(() => callback(200, "File Deleted",'text'))
@@ -157,7 +104,7 @@ export function tokens(data: RequestData, callback) {
     function _post(){
         let userPayload = new UserData(data.payload);
         if (!userPayload.phone || !userPayload.password ){
-            return callback(200, errorObject["51"], "text");
+            return callback(200, dataHandler.errorObject["51"], "text");
         }
 
         dataHandler.read('users',userPayload.phone)
@@ -166,8 +113,8 @@ export function tokens(data: RequestData, callback) {
                 if (userPayload.password != userData.password){
                     return Promise.reject(12);
                 }
-                let token = new UserToken(userData.phone);
-                //return Promise.resolve(new UserToken(userData.phone));
+                let token = new TokenData(userData.phone);
+                //return Promise.resolve(new TokenData(userData.phone));
                 dataHandler.checkPathAvaiable("tokens",token.id)
                     .then(() => dataHandler.create('tokens', token.id))
                     .then((fd:number) => dataHandler.write(fd, JSON.stringify(token)))
@@ -177,9 +124,9 @@ export function tokens(data: RequestData, callback) {
             .catch((errorCode) => callback(500, dataHandler.errorObject[`${errorCode}`],'text'));
     }
 
-    function _get(data: RequestData, callback){
-        if (!_checkProperty('id', data.query)) return callback(400, 'Missing Token id', 'text');
-        _verifyToken(data.header['id'], data.header['phone'])
+    function _get(){
+        if (!checkProperty('id', data.query)) return callback(400, 'Missing Token id', 'text');
+        verifyToken(data.header['id'], data.header['phone'])
             .then(()=> dataHandler.checkFileExists('tokens', data.query['id'].trim()))
             .then(() => dataHandler.readData('tokens', data.query['id'].trim()))
             .then((data) => callback(200,JSON.stringify(data)))
@@ -187,24 +134,24 @@ export function tokens(data: RequestData, callback) {
 
     }
 
-    function _put(data: RequestData, callback){
+    function _put(){
         if ((typeof (data.payload['id']) != 'string') || !(data.payload['extend'])) return callback(400, "Error : Missing required field(s) or field(s) are invalid");
 
-        _verifyToken(data.header['id'], data.header['phone'])
+        verifyToken(data.header['id'], data.header['phone'])
             .then(() => dataHandler.checkFileExists("tokens", data.payload['id']))
             .then(() => dataHandler.readData("tokens", data.payload['id'],))
-            .then(function(readData:UserToken){
-                if (readData.expires > Date.now()) return callback(400, errorObject["14"]);
+            .then(function(readData:TokenData){
+                if (readData.expires > Date.now()) return callback(400, dataHandler.errorObject["14"]);
                 readData.expires = Date.now() + 1000 * 60 * 60;
                 return Promise.resolve(readData);
             })
-            .then((readData:UserToken) => dataHandler.update("tokens", readData.id, JSON.stringify(readData)))
+            .then((readData:TokenData) => dataHandler.update("tokens", readData.id, JSON.stringify(readData)))
             .then(() => callback(200))
-            .catch((errorCode) => callback(500, errorObject[`${errorCode}`]))
+            .catch((errorCode) => callback(500, dataHandler.errorObject[`${errorCode}`]))
         ;
     }
 
-    function _delete(data: RequestData, callback){
+    function _delete(){
         if (!(data.query['id'])) return callback(400, 'Missing required field(s) or field(s) are invalid', 'text');
 
         dataHandler.checkFileExists("tokens", data.payload['id'])
@@ -216,3 +163,26 @@ export function tokens(data: RequestData, callback) {
     acceptableMethods[data.method] ? acceptableMethods[data.method](data, callback) : callback(400, "Invalid Route");
 }
 
+export function checks(data: RequestData, callback) {
+    const acceptableMethods = {
+        'post': _post,
+        // 'get': _get,
+        // 'put': _put,
+        // 'delete': _delete
+    };
+
+    function _post(){
+        let requestData = new CheckerRequestHeader(data.header);
+        verifyToken(requestData.id, requestData.phone)
+            .then(()=> dataHandler.read('users',requestData.phone))
+            .then((userData:UserData) =>  userData.checks ? Promise.resolve(userData.checks) : Promise.reject(15))
+            .then((checks:Array<string>) => checks.length < config.environment.maxChecks ? Promise.resolve(checks) :  Promise.reject(16))
+            .then((checks:Array<string>) => )
+            .catch((errorCode) => callback(500, dataHandler.errorObject[`${errorCode}`], "text"));
+        console.log(requestData);
+    }
+
+    acceptableMethods[data.method] ? acceptableMethods[data.method](data, callback) : callback(405);
+
+
+}

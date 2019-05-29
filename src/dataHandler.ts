@@ -119,30 +119,11 @@ import * as path from 'path';
         12 : 'Error : Wrong Password',
         13 : 'Error : Invalid token (required file missing)',
         14 : 'Error : Expired token',
+        15 : 'Error : Property not found',
+        16 : 'Error : Max checks allowed exceeded',
         20 : 'Error : Missing phone number',
         50 : 'Error : Password hashing failed',
-        51 : 'Error : Missing required field(s)'
+        51 : 'Error : Missing required field(s)',
+
 
     };
-    //
-    // return {
-    //     create: create,
-    //     open: open,
-    //     read: read,
-    //     write: write,
-    //     update: update,
-    //     check: check,
-    //     append: append,
-    //     close: close,
-    //     unlink: unlink
-    // };
-// });
-
-
-// fileCheck("test", "test10",)
-//     .then(path => fileAppend(path as string, "New Data"))
-//     .catch(error => console.log(error));
-
-//fileUpdate("test", "test10", "Hello World1").then(result => console.log(result));
-
-

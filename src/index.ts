@@ -1,7 +1,7 @@
 import * as http from 'http';
 import {StringDecoder} from 'string_decoder';
-import * as router from './router';
-import {RequestData} from './requestData';
+import * as router from './router/router';
+import {RequestData} from './object/requestData';
 import {environment} from "./config";
 
 

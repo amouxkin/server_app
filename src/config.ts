@@ -5,7 +5,8 @@ if ((typeof (process.env.NODE_ENV == 'string') ? process.env.NODE_ENV : 'develop
         'httpPort' : 5000,
         'httpsPort' : 5001,
         'envName' : 'production',
-        'hashingSecret' : 'secretHashCode'
+        'hashingSecret' : 'secretHashCode',
+        'maxChecks' : 5
     };
 } else {
     environment = {
@@ -13,5 +14,6 @@ if ((typeof (process.env.NODE_ENV == 'string') ? process.env.NODE_ENV : 'develop
         'httpsPort' : 3001,
         'envName' : 'development',
         'hashingSecret' : 'thisIsASecret',
+        'maxChecks' : 5
     }
 }

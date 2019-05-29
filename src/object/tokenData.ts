@@ -1,5 +1,6 @@
-import {randomString} from './helper'
-export class UserToken{
+import {randomString} from '../helper'
+
+export class TokenData{
     phone:string;
     id:string;
     expires:number;
