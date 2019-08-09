@@ -1,0 +1,11 @@
+version: "3.7"
+services:
+  node:
+    image: node:12.8.0-alpine
+    container_name: node
+    ports:
+      - 3000:3000
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./:/home/workspace/server_app

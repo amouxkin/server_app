@@ -177,7 +177,7 @@ export function checks(data: RequestData, callback) {
             .then(()=> dataHandler.read('users',requestData.phone))
             .then((userData:UserData) =>  userData.checks ? Promise.resolve(userData.checks) : Promise.reject(15))
             .then((checks:Array<string>) => checks.length < config.environment.maxChecks ? Promise.resolve(checks) :  Promise.reject(16))
-            .then((checks:Array<string>) => )
+            // .then((checks:Array<string>) => )
             .catch((errorCode) => callback(500, dataHandler.errorObject[`${errorCode}`], "text"));
         console.log(requestData);
     }
